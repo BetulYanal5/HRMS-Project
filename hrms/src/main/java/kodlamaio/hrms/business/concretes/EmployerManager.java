@@ -1,37 +1,39 @@
 package kodlamaio.hrms.business.concretes;
 
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import kodlamaio.hrms.business.abstracts.EmployerService;
-import kodlamaio.hrms.core.utilities.results.DataResult;
+import kodlamaio.hrms.business.validators.EmployerValidatorService;
+
+import kodlamaio.hrms.core.utilities.helpers.Helpers;
 import kodlamaio.hrms.core.utilities.results.Result;
-import kodlamaio.hrms.core.utilities.results.SuccessDataResult;
-import kodlamaio.hrms.core.utilities.results.SuccessResult;
-import kodlamaio.hrms.dataAccess.abstracts.EmployerDao;
+import kodlamaio.hrms.dataAccess.abstracts.UserDao;
 import kodlamaio.hrms.entities.concretes.Employer;
 
 
 @Service
-public class EmployerManager implements EmployerService{
-
-	EmployerDao employerDao;
+public class EmployerManager extends UserManager<Employer> implements EmployerService{
+	
+	private final EmployerValidatorService employerValidatorService;
+  
 	@Autowired
-	public EmployerManager(EmployerDao employerDao) {
-		this.employerDao=employerDao;
-	}
-	@Override
-	public DataResult<List<Employer>> getAll() {
-
-		return new SuccessDataResult<List<Employer>>(this.employerDao.findAll(),"Employer listelendi");
+	public EmployerManager(UserDao<Employer> userDao, EmployerValidatorService employerValidatorService) {
+		super(userDao);
+		this.employerValidatorService = employerValidatorService;
 	}
 
 	@Override
 	public Result add(Employer employer) {
-		this.employerDao.save(employer);
-		return new SuccessResult("Employer eklendi");
+		Result result = Helpers.BusinessEngine.run(employerValidatorService.employerNullCheck(employer), employerValidatorService.domainCheck(employer));
+		
+		if(!result.isSuccess()) {
+			return result;
+		}
+		
+		return super.add(employer);
 	}
+
 
 }
